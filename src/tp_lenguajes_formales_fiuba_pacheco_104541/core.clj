@@ -1,5 +1,5 @@
-(ns tp-lenguajes-formales-fiuba-pacheco-104541.core)
-
+(ns tp-lenguajes-formales-fiuba-pacheco-104541.core
+  (:require [tp-lenguajes-formales-fiuba-pacheco-104541.probando_exports :refer :all]))
 
 (declare ejemplo)
 (declare es-el-doble?)
@@ -8,6 +8,8 @@
 (defn -main
   "Ejemplo de Proyecto en Clojure"
   [& args]
+  (println "Hola, soy un proyecto en Clojure")
+  (println (sumar_pach 2 31121))
   (ejemplo))
 
 (defn ejemplo []
