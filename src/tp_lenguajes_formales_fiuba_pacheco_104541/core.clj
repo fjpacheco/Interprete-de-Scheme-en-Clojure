@@ -1,5 +1,5 @@
-(ns tp-lenguajes-formales-fiuba-pacheco-104541.core
-  (:gen-class))
+(ns tp-lenguajes-formales-fiuba-pacheco-104541.core)
+
 
 (declare ejemplo)
 (declare es-el-doble?)
