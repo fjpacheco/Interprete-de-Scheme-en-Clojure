@@ -1,7 +1,7 @@
 (ns tp-lenguajes-formales-fiuba-pacheco-104541.core)
   
 (require '[tp-lenguajes-formales-fiuba-pacheco-104541.probando_exports :refer :all]
-         '[tp-lenguajes-formales-fiuba-pacheco-104541.scheme :refer :all]
+        '[tp-lenguajes-formales-fiuba-pacheco-104541.scheme :refer :all]
 )
 
 (declare ejemplo)
@@ -13,7 +13,15 @@
   [& args]
   (println "Hola, soy un proyecto en Clojure")
   (println (sumar_pach 2 31121))
-  (ejemplo))
+  ;(repl) ; funciona el llamado pero se rompe todo por no implementar nada..
+  (println (fnc-sumar ()))
+  (println (fnc-sumar '(3)))
+  (println (fnc-sumar '(3 4)))
+  (println (fnc-sumar '(3 4 5)))
+  (println (fnc-sumar '(3 4 5 6)))
+  (println (fnc-sumar '(1 A 4 5 6)))
+  ;(ejemplo)
+)
 
 (defn ejemplo []
   (let [mensaje-1 (do (print "Ingrese un numero: ") (flush)),
