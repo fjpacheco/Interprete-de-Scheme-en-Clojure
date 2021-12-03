@@ -20,6 +20,11 @@
   (println (fnc-sumar '(3 4 5)))
   (println (fnc-sumar '(3 4 5 6)))
   (println (fnc-sumar '(1 A 4 5 6)))
+  (println (fnc-sumar '(A B 4 5 6)))
+  (println (fnc-sumar '(A B C D 6)))
+  (println (fnc-sumar '(1 2 3 4 4 A B C D 6)))
+  (println (fnc-sumar '(1 2 3 4 4 (1 2 3) B C D 6)))
+  (println (fnc-restar ()))
   ;(ejemplo)
 )
 

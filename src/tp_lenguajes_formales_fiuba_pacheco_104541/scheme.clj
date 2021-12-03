@@ -692,6 +692,8 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
 ; (;ERROR: Wrong number of args given #<primitive-procedure read>)
 (defn fnc-read
 "Devuelve la lectura de un elemento de Scheme desde la terminal/consola."
+;" ATENTO A WITH-IN-STR PARA ANALZIAR STDin!!!!!!!!!!! 
+;WITH-OUT-STRING PARA SALIDA ?"
 []
 ()
 )
@@ -716,20 +718,14 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
   "Suma los elementos de una lista."
   [args]
   (cond 
-    (or (= 2 (count args)) (= 1 (count args)) (= 0 (count args)))
+    (empty? args)
+      0
+    (not (integer? (first args)))
+      (generar-mensaje-error :wrong-type-arg1 '+ (first args))
+    (not (every? integer? (rest args)))
+      (generar-mensaje-error :wrong-type-arg2 '+ (first (filter (comp not integer?) args)))
+    :else 
       (reduce + args)
-    :else    
-      (reduce 
-        (fn [suma_numero_acumulada proximo_numero_a_sumar]
-            (and (not (number? suma_numero_acumulada)) (symbol? suma_numero_acumulada))
-              (println (generar-mensaje-error :wrong-type-arg1 '+ suma_numero_acumulada))
-            (and (not (number? proximo_numero_a_sumar)) (symbol? proximo_numero_a_sumar))
-              (println (generar-mensaje-error :wrong-type-arg2 '+ proximo_numero_a_sumar))
-            :else 
-              (reduce + suma_numero_acumulada proximo_numero_a_sumar)
-        )
-        args
-      )
   )
 )
 
@@ -751,8 +747,19 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
 ; (;ERROR: -: Wrong type in arg2 A)
 (defn fnc-restar
 "Resta los elementos de un lista."
-[]
-()
+  [args]
+  (cond 
+    (empty? args)
+      (generar-mensaje-error :wrong-number-args-oper '-)
+    (and (= (count args) 1) (integer? (first args)))
+      (- (first args))
+    (not (integer? (first args)))
+      (generar-mensaje-error :wrong-type-arg1 '- (first args))
+    (not (every? integer? (rest args)))
+      (generar-mensaje-error :wrong-type-arg2 '- (first (filter (comp not integer?) args)))
+    :else 
+      (reduce - args)
+  )
 )
 
 ; user=> (fnc-menor ())
