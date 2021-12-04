@@ -190,7 +190,10 @@
   [fnc lae amb]
     (cond
       (= fnc '+)            (fnc-sumar lae)
+      (= fnc '-)            (fnc-restar lae)
       (= fnc '<)            (fnc-menor lae)
+      (= fnc '>)            (fnc-mayor lae)
+      (= fnc '>=)           (fnc-mayor-o-igual lae)
 
       ;
       ;
@@ -762,6 +765,32 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
   )
 )
 
+; Busco el symbolo de la función... 
+(defn get-symbol-function [function]
+  (first (replace '{_LT_ <, _GT_ >, _GT__EQ_ >=}  (list (symbol (re-find #"(?<=\$).*(?=@)" (str function))))))
+)
+
+; La desigualdad es '< or '> or >=
+(defn aplicar-desigualdad [desigualdad args]
+  (cond 
+    (empty? args)
+      (symbol "#t")
+    :else 
+      (try
+        (if (apply desigualdad args) 
+          (symbol "#t")
+          (symbol "#f")
+        )
+        (catch Exception e
+          (if (not (integer? (first args)))
+            (generar-mensaje-error :wrong-type-arg1 (get-symbol-function desigualdad) (first args))
+            (generar-mensaje-error :wrong-type-arg2 (get-symbol-function desigualdad) (first (filter (comp not integer?) args)))
+          )
+        )
+      )
+  )
+)
+
 ; user=> (fnc-menor ())
 ; #t
 ; user=> (fnc-menor '(1))
@@ -784,8 +813,8 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
 ; (;ERROR: <: Wrong type in arg2 A)
 (defn fnc-menor
 "Devuelve #t si los numeros de una lista estan en orden estrictamente creciente; si no, #f."
-[]
-()
+  [args]
+  (aplicar-desigualdad < args)
 )
 
 ; user=> (fnc-mayor ())
@@ -810,8 +839,8 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
 ; (;ERROR: >: Wrong type in arg2 A)
 (defn fnc-mayor
 "Devuelve #t si los numeros de una lista estan en orden estrictamente decreciente; si no, #f."
-[]
-()
+  [args]
+  (aplicar-desigualdad > args)
 )
 
 ; user=> (fnc-mayor-o-igual ())
@@ -836,8 +865,8 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
 ; (;ERROR: >=: Wrong type in arg2 A)
 (defn fnc-mayor-o-igual
 "Devuelve #t si los numeros de una lista estan en orden decreciente; si no, #f."
-[]
-()
+  [args]
+  (aplicar-desigualdad >= args)
 )
 
 ; user=> (evaluar-escalar 32 '(x 6 y 11 z "hola"))

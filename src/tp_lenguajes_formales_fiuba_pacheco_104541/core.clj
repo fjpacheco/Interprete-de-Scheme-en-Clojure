@@ -25,6 +25,11 @@
   (println (fnc-sumar '(1 2 3 4 4 A B C D 6)))
   (println (fnc-sumar '(1 2 3 4 4 (1 2 3) B C D 6)))
   (println (fnc-restar ()))
+  (println (fnc-menor '(1 2 3)))
+  (println (fnc-menor '(1 2 1)))
+  (println (fnc-menor '(1 2 3 A)))
+  (println (fnc-menor '(1 2 1 A FEDE)))
+  (println (fnc-mayor-o-igual '(1 2 FEDE)))
   ;(ejemplo)
 )
 
