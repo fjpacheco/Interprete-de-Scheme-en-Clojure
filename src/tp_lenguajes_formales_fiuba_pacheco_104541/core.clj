@@ -12,24 +12,9 @@
   "Ejemplo de Proyecto en Clojure"
   [& args]
   (println "Hola, soy un proyecto en Clojure")
-  (println (sumar_pach 2 31121))
   ;(repl) ; funciona el llamado pero se rompe todo por no implementar nada..
-  (println (fnc-sumar ()))
-  (println (fnc-sumar '(3)))
-  (println (fnc-sumar '(3 4)))
-  (println (fnc-sumar '(3 4 5)))
-  (println (fnc-sumar '(3 4 5 6)))
-  (println (fnc-sumar '(1 A 4 5 6)))
-  (println (fnc-sumar '(A B 4 5 6)))
-  (println (fnc-sumar '(A B C D 6)))
-  (println (fnc-sumar '(1 2 3 4 4 A B C D 6)))
-  (println (fnc-sumar '(1 2 3 4 4 (1 2 3) B C D 6)))
-  (println (fnc-restar ()))
-  (println (fnc-menor '(1 2 3)))
-  (println (fnc-menor '(1 2 1)))
-  (println (fnc-menor '(1 2 3 A)))
-  (println (fnc-menor '(1 2 1 A FEDE)))
-  (println (fnc-mayor-o-igual '(1 2 FEDE)))
+
+  (println (restaurar-bool (read-string (proteger-bool-en-str "(and (or #F #f #t #T) #T)"))))
   ;(ejemplo)
 )
 

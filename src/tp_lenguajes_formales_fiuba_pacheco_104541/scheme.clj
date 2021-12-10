@@ -83,36 +83,37 @@
 ; Si la 2da. posicion del resultado es nil, devuelve 'Goodbye! (caso base de la recursividad).
 ; Si no, imprime la 1ra. pos. del resultado y se llama recursivamente con la 2da. pos. del resultado. 
 (defn repl
-"Inicia el REPL de Scheme."
-([]
-(println "Interprete de Scheme en Clojure")
-(println "Trabajo Practico de 75.14/95.48 - Lenguajes Formales 2021") (prn)
-(println "Inspirado en:")
-(println "  SCM version 5f2.")                        ; https://people.csail.mit.edu/jaffer/SCM.html
-(println "  Copyright (C) 1990-2006 Free Software Foundation.") (prn) (flush)
-(repl (list 'append 'append 'car 'car 'cdr 'cdr 'cond 'cond 'cons 'cons 'define 'define
-        'display 'display 'env 'env 'equal? 'equal? 'eval 'eval 'exit 'exit
-        'if 'if 'lambda 'lambda 'length 'length 'list 'list 'list? 'list? 'load 'load
-        'newline 'newline 'nil (symbol "#f") 'not 'not 'null? 'null? 'or 'or 'quote 'quote
-        'read 'read 'reverse 'reverse 'set! 'set! (symbol "#f") (symbol "#f")
-        (symbol "#t") (symbol "#t") '+ '+ '- '- '< '< '> '> '>= '>=)))
-([amb]
-(print "> ") (flush)
-(try
-(let [renglon (leer-entrada)]                       ; READ
-   (if (= renglon "")
-       (repl amb)
-       (let [str-corregida (proteger-bool-en-str renglon),
-             cod-en-str (read-string str-corregida),
-             cod-corregido (restaurar-bool cod-en-str),
-             res (evaluar cod-corregido amb)]     ; EVAL
-             (if (nil? (second res))              ;   Si el ambiente del resultado es `nil`, es porque se ha evaluado (exit)
-                 'Goodbye!                        ;   En tal caso, sale del REPL devolviendo Goodbye!.
-                 (do (imprimir (first res))       ; PRINT
-                     (repl (second res)))))))     ; LOOP (Se llama a si misma con el nuevo ambiente)
-(catch Exception e                                  ; PRINT (si se lanza una excepcion)
-            (imprimir (generar-mensaje-error :error (get (Throwable->map e) :cause)))
-            (repl amb)))))                        ; LOOP (Se llama a si misma con el ambiente intacto)
+  "Inicia el REPL de Scheme."
+  ([]
+    (println "Interprete de Scheme en Clojure")
+    (println "Trabajo Practico de 75.14/95.48 - Lenguajes Formales 2021") (prn)
+    (println "Inspirado en:")
+    (println "  SCM version 5f2.")                        ; https://people.csail.mit.edu/jaffer/SCM.html
+    (println "  Copyright (C) 1990-2006 Free Software Foundation.") (prn) (flush)
+    (repl (list 'append 'append 'car 'car 'cdr 'cdr 'cond 'cond 'cons 'cons 'define 'define
+            'display 'display 'env 'env 'equal? 'equal? 'eval 'eval 'exit 'exit
+            'if 'if 'lambda 'lambda 'length 'length 'list 'list 'list? 'list? 'load 'load
+            'newline 'newline 'nil (symbol "#f") 'not 'not 'null? 'null? 'or 'or 'quote 'quote
+            'read 'read 'reverse 'reverse 'set! 'set! (symbol "#f") (symbol "#f")
+            (symbol "#t") (symbol "#t") '+ '+ '- '- '< '< '> '> '>= '>=)))
+          
+  ([amb]
+    (print "> ") (flush)
+    (try
+      (let [renglon (leer-entrada)]                       ; READ
+        (if (= renglon "")
+            (repl amb)
+            (let [str-corregida (proteger-bool-en-str renglon),
+                  cod-en-str (read-string str-corregida),
+                  cod-corregido (restaurar-bool cod-en-str),
+                  res (evaluar cod-corregido amb)]     ; EVAL
+                  (if (nil? (second res))              ;   Si el ambiente del resultado es `nil`, es porque se ha evaluado (exit)
+                      'Goodbye!                        ;   En tal caso, sale del REPL devolviendo Goodbye!.
+                      (do (imprimir (first res))       ; PRINT
+                          (repl (second res)))))))     ; LOOP (Se llama a si misma con el nuevo ambiente)
+    (catch Exception e                                  ; PRINT (si se lanza una excepcion)
+                (imprimir (generar-mensaje-error :error (get (Throwable->map e) :cause)))
+                (repl amb)))))                        ; LOOP (Se llama a si misma con el ambiente intacto)
 
 
 (defn evaluar
@@ -120,9 +121,9 @@
   [expre amb]
   
   (if   
-    (and (seq? expre) (or (empty? expre) (error? expre))) ; si `expre` es () o error, devolverla intacta
-    (list expre amb)                                      ; de lo contrario, evaluarla
-    (cond
+    (and (seq? expre) (or (empty? expre) (error? expre))) ; si `expre` es () o error:
+    (list expre amb)                                        ; devovlerla intacta!!
+    (cond                                                   ; de lo contrario, evaluarla
       (not (seq? expre))             (evaluar-escalar expre amb)
 
       (igual? (first expre) 'define) (evaluar-define expre amb)
@@ -542,6 +543,78 @@ amb))))
 
 ; FUNCIONES QUE DEBEN SER IMPLEMENTADAS PARA COMPLETAR EL INTERPRETE DE SCHEME (ADEMAS DE COMPLETAR `EVALUAR` Y `APLICAR-FUNCION-PRIMITIVA`):
 
+
+; Si me llega una cadena con espacios extras, aprovecho re-seq con las expresiones regualres!!
+;
+; EXPR. REG: #"[^\s]+ "
+;     Esta expresion la uso sobre la primera cadena recibida. 
+;     Agarra las palabras que arrancan sin espacio, hasta terminar con un primer espacio!
+;     >> si la cadena es " Hola,   como   estas?     " me tomará "Hola, como estas? "
+;
+; "re-seq" con esa exp. me dejará esas palabras en una lista. PERO si la ultima palabra de la cadena
+; hubiese terminado con "   ...holaa   ".. en la lista aplicadole dicho "re-seq", su ultimo elemento tendrá un espacio. 
+; Entonces, juego un poco con concat, drop-last & last para que ésa ultima palabra de la lista, si hubiese quedado con "holaa "; quiero que me quede "holaa".
+;
+; user=> (arreglar-espacios-extras "   hola soy       una,               super    cadena           con espacios rebundante           sssss    ")
+; "hola soy una, super cadena con espacios rebundante sssss"
+;
+; user => (quitar-espacios-extras " (   hola soy       una,               super    cadena           con espacios rebundante           sssss    )")
+; "(hola soy una, super cadena con espacios rebundante sssss)"
+
+(defn aux-map [word index cantidad-palabras]
+  (cond
+    ; si indice no es 0 ni 1, y el index es cantidad-palabras y cantidad-palabras -1
+    (or 
+      (= index 0)
+      (= index 1)
+      (= index (- cantidad-palabras 1))
+      (= index (- cantidad-palabras 2))
+    )
+      (let [char-word (map char word)]
+        (cond 
+          (or
+            (and (= '\( (first char-word)) (= '\space (second char-word))) ; "( "
+            (and (= '\) (first char-word)) (= '\space (second char-word))) ; ") "
+          )
+            nil 
+          (and (= '\( (first char-word)) (not (= '\space (second char-word)))) ; "(palabra"
+            (apply str (rest char-word))
+          (and                                                                            ; "palabra)"
+            (= '\) (last char-word))
+            (not (= '\space (nth char-word (- (count char-word) 2))))
+          )
+            (apply str (butlast char-word))
+          (and                           
+            (> (count char-word) 2)                                                 ; "palabra) "
+            (= '\space (last char-word))
+            (= '\) (nth char-word (- (count char-word) 2)))
+            (not (= '\space (nth char-word (- (count char-word) 3))))
+          )
+            (apply str (drop-last 2 char-word))
+          :else
+            word
+        )
+      )
+    :else 
+      word
+  )
+)
+
+(defn ultima-limpieza [list]
+  (drop-last list)
+)
+
+
+(defn quitar-espacios-extras [cadena]
+  (let [seq-palabras (re-seq #"[^\s]+ " (str cadena " "))] 
+    (str "(" (apply str (ultima-limpieza (filter (comp not nil?) (map aux-map seq-palabras (take (count seq-palabras) (range)) (take (count seq-palabras) (repeat (count seq-palabras))))))) ")")
+  )
+)
+
+(defn delete-espacio-agregado [cadena]
+  (apply str (drop-last (map char cadena)))
+)
+
 ; LEER-ENTRADA:
 ; user=> (leer-entrada)
 ; (hola
@@ -551,27 +624,81 @@ amb))))
 ; 123
 ; "123"
 (defn leer-entrada
-"Lee una cadena desde la terminal/consola. Si los parentesis no estan correctamente balanceados al presionar Enter/Intro,
-se considera que la cadena ingresada es una subcadena y el ingreso continua. De lo contrario, se la devuelve completa."
-[]
-()
+  "Lee una cadena desde la terminal/consola. Si los parentesis no estan correctamente balanceados al presionar Enter/Intro,
+  se considera que la cadena ingresada es una subcadena y el ingreso continua. De lo contrario, se la devuelve completa."
+  ([]
+    (leer-entrada "")
+  )
+  ([line-old]
+    (let [line (read-line)]
+      (let [cant-parentesis (verificar-parentesis (str line-old line))]
+        (cond 
+          (= cant-parentesis 0) 
+            (str line-old line)
+          (< cant-parentesis 0) 
+            (generar-mensaje-error :warning-paren)
+          :else
+            (leer-entrada (str line-old line " "))
+        )
+      )
+    )
+  )
 )
 
-; user=> (verificar-parentesis "(hola 'mundo")
+(defn remplazar-nil-por-cero [numero]
+  (if (nil? numero) 0 numero)
+)
+
+; user=> (verificar-parentesis "(hola 'mundo" 1|0
 ; 1
-; user=> (verificar-parentesis "(hola '(mundo)))")
+; user=> (verificar-parentesis "(hola '(mundo)))" 2|3
 ; -1
-; user=> (verificar-parentesis "(hola '(mundo) () 6) 7)")
+; user=> (verificar-parentesis "(hola '(mundo) () 6) 7)" 3|4
 ; -1
-; user=> (verificar-parentesis "(hola '(mundo) () 6) 7) 9)")
+; user=> (verificar-parentesis "(hola '(mundo) () 6) 7) 9)" 4|5
 ; -1
-; user=> (verificar-parentesis "(hola '(mundo) )")
+; user=> (verificar-parentesis "(hola '(mundo) )" 2|2
 ; 0
 (defn verificar-parentesis
 "Cuenta los parentesis en una cadena, sumando 1 si `(`, restando 1 si `)`. Si el contador se hace negativo, para y retorna -1."
-[]
-()
+  [cadena]
+
+  (let [freq_por_chars (frequencies (map str cadena))]
+    (let [cant_parentesis_iniciales (remplazar-nil-por-cero (get freq_por_chars "(")),
+          cant_parentesis_finales (remplazar-nil-por-cero (get freq_por_chars ")")) ] 
+      (cond 
+        (> cant_parentesis_iniciales cant_parentesis_finales)
+         (- cant_parentesis_iniciales cant_parentesis_finales)
+        (< cant_parentesis_iniciales cant_parentesis_finales)
+          -1
+        :else 
+          0
+      )
+    )
+  )
+  
 )
+
+(defn agregar-new-key-value-si-no-existia-la-key [amb-revisado key-new value-new]
+    (let [amb-modificado-vec (vec amb-revisado)]
+      (if (not (not-any? (fn [pair-key-value] (= key-new (first pair-key-value))) (partition 2 amb-modificado-vec)))
+          (apply list amb-modificado-vec)
+          (apply list (conj amb-modificado-vec key-new value-new))
+
+      ) 
+    )
+)
+
+(defn actualizar-amb-si-existe-la-key [amb key-new value-new]
+  (drop-last 
+    (map (fn [key_amb value_amb index] (if (and (= key_amb key-new) (odd? index)) value-new value_amb)) 
+      (conj amb nil)                              ; '(nil a 1 b 2 c 3)
+      (conj (vec amb) nil)                        ;    [a 1 b 2 c 3 nil]
+      (take (+ (count amb) 1) (range))            ;    [0 1 2 3 4 5]   .... ésos son los index.. me interesa los indices impares!
+    )
+  )
+)
+
 
 ; user=> (actualizar-amb '(a 1 b 2 c 3) 'd 4)
 ; (a 1 b 2 c 3 d 4)
@@ -581,11 +708,20 @@ se considera que la cadena ingresada es una subcadena y el ingreso continua. De 
 ; (a 1 b 2 c 3)
 ; user=> (actualizar-amb () 'b 7)
 ; (b 7)
+    ;; La 1° pasado actualizo la key en caso de que exista en el ambiente
+    ;; La 2° pasada reviso si no existia esa key para así agregarlo al final.. terminando el algoritmo como O(2*n). 
+        ; Podria mejorar con O(n) si utilizo set! en la 1° pasada, guardando en un true/false si existia o no 
+        ; pero busco evitar usar el set! en este paradigma
 (defn actualizar-amb
 "Devuelve un ambiente actualizado con una clave (nombre de la variable o funcion) y su valor. 
 Si el valor es un error, el ambiente no se modifica. De lo contrario, se le carga o reemplaza la nueva informacion."
-[]
-()
+  [amb key-new value-new]
+  (if (error? value-new)
+    amb ; si es error, devuelvo como estaba el ambiente
+    (let [amb-revisado (actualizar-amb-si-existe-la-key amb key-new value-new)]
+      (agregar-new-key-value-si-no-existia-la-key amb-revisado key-new value-new )
+    )
+  )
 )
 
 ; user=> (buscar 'c '(a 1 b 2 c 3 d 4 e 5))
@@ -595,8 +731,13 @@ Si el valor es un error, el ambiente no se modifica. De lo contrario, se le carg
 (defn buscar
 "Busca una clave en un ambiente (una lista con claves en las posiciones impares [1, 3, 5...] y valores en las pares [2, 4, 6...]
 y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encuentra."
-[]
-()
+  [key-buscada amb]
+  (let [valor-buscado (get (apply hash-map amb) key-buscada)]
+    (if (nil? valor-buscado)
+      (generar-mensaje-error :unbound-variable key-buscada)
+      valor-buscado
+    )
+  )
 )
 
 ; user=> (error? (list (symbol ";ERROR:") 'mal 'hecho))
@@ -607,8 +748,16 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
 ; true
 (defn error?
 "Devuelve true o false, segun sea o no el arg. una lista con `;ERROR:` o `;WARNING:` como primer elemento."
-[]
-()
+  [lista_de_error]
+  (if (list? lista_de_error)
+    (let [primer_elemento (first lista_de_error)]
+      (if (or (= primer_elemento (symbol ";ERROR:")) (= primer_elemento (symbol ";WARNING:")))
+        true
+        false
+      )
+    )
+    false
+  )
 )
 
 ; user=> (proteger-bool-en-str "(or #F #f #t #T)")
@@ -619,8 +768,33 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
 ; ""
 (defn proteger-bool-en-str
 "Cambia, en una cadena, #t por %t y #f por %f (y sus respectivas versiones en mayusculas), para poder aplicarle read-string."
-[]
-()
+  [cadena]
+  (apply str (replace '{\# \%} (map char cadena))) ; ; 1° Versión! SI funciona.. pero entendí en el foro que podíamos usar "clojure.string/replace"
+)
+
+
+(def POR_F (symbol "%F"))
+(def NUM_F (symbol "#F"))
+(def POR_f (symbol "%f"))
+(def NUM_f (symbol "#f"))
+(def POR_T (symbol "%T"))
+(def NUM_T (symbol "#T"))
+(def POR_t (symbol "%t"))
+(def NUM_t (symbol "#t"))
+
+(defn reemplace-bool [sym]
+  (cond 
+    (= sym POR_T)
+      NUM_T
+    (= sym POR_f)
+      NUM_f
+    (= sym POR_F)
+      NUM_F
+    (= sym POR_t)
+      NUM_t
+    :else
+      sym
+  )
 )
 
 ; user=> (restaurar-bool (read-string (proteger-bool-en-str "(and (or #F #f #t #T) #T)")))
@@ -629,9 +803,17 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
 ; (and (or #F #f #t #T) #T)
 (defn restaurar-bool
 "Cambia, en un codigo leido con read-string, %t por #t y %f por #f (y sus respectivas versiones en mayusculas)."
-[]
-()
+  [codigo]
+  (map (fn [item] 
+          (if (not (list? item))
+            (first (map reemplace-bool (list item)))
+            (restaurar-bool item)
+          )
+       )
+      codigo
+  )
 )
+
 
 ; user=> (igual? 'if 'IF)
 ; true
@@ -881,8 +1063,8 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
 ; ((;ERROR: unbound variable: n) (x 6 y 11 z "hola"))
 (defn evaluar-escalar
 "Evalua una expresion escalar. Devuelve una lista con el resultado y un ambiente."
-[]
-()
+  []
+  ()
 )
 
 ; user=> (evaluar-define '(define x 2) '(x 1))

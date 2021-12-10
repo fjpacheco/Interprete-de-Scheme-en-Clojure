@@ -9,6 +9,13 @@
                       fnc-menor
                       fnc-mayor
                       fnc-mayor-o-igual
+                      verificar-parentesis
+                      leer-entrada
+                      actualizar-amb
+                      error?
+                      buscar
+                      proteger-bool-en-str
+                      restaurar-bool
                    ]
           ]
 )
@@ -236,5 +243,123 @@
     (is (= (generar-mensaje-error :wrong-type-arg1 '>= 'A) (fnc-mayor-o-igual '(A B))))
     (is (= (generar-mensaje-error :wrong-type-arg2 '>= 'B) (fnc-mayor-o-igual '(2 B))))
     (is (= (generar-mensaje-error :wrong-type-arg2 '>= ()) (fnc-mayor-o-igual '(2 ()))))
+  )
+)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;,,,
+
+
+; user=> (verificar-parentesis "(hola 'mundo")
+; 1
+; user=> (verificar-parentesis "(hola '(mundo)))")
+; -1
+; user=> (verificar-parentesis "(hola '(mundo) () 6) 7)")
+; -1
+; user=> (verificar-parentesis "(hola '(mundo) () 6) 7) 9)")
+; -1
+; user=> (verificar-parentesis "(hola '(mundo) )")
+; 0
+(deftest fnc-verificar-parentesis-test
+  (testing "Prueba de la funcion: verificar-parentesis"
+    (is (=  1 (verificar-parentesis "(hola 'mundo")))
+    (is (= -1 (verificar-parentesis "(hola '(mundo)))") ))
+    (is (= -1 (verificar-parentesis "(hola '(mundo) () 6) 7)") ))
+    (is (= -1 (verificar-parentesis "(hola '(mundo) () 6) 7) 9)") ))
+    (is (=  0 (verificar-parentesis "(hola '(mundo) )") ))
+  )
+)
+
+; user=> (leer-entrada)
+; (hola
+; mundo)
+; "(hola mundo)"
+; user=> (leer-entrada)
+; 123
+; "123"
+(deftest fnc-leer-entrada-test
+  (testing "Prueba de la funcion: leer-entrada"
+    (is (= "(hola mundo)" (with-in-str "(hola\nmundo)" (leer-entrada))))
+    (is (= "123" (with-in-str "123" (leer-entrada)))) ; "123" no es númerico! Es string.. 
+                                                      ; Pero si se ejecuta en clojure (leer-entrada) 
+                                                      ; con el numero 123, te devuelve "123"
+  )
+)
+
+
+; user=> (actualizar-amb '(a 1 b 2 c 3) 'd 4)
+; (a 1 b 2 c 3 d 4)
+; user=> (actualizar-amb '(a 1 b 2 c 3) 'b 4)
+; (a 1 b 4 c 3)
+; user=> (actualizar-amb '(a 1 b 2 c 3) 'b (list (symbol ";ERROR:") 'mal 'hecho))
+; (a 1 b 2 c 3)
+; user=> (actualizar-amb () 'b 7)
+; (b 7)
+(deftest fnc-actualizar-amb-test
+  (testing "Prueba de la funcion: actualizar-amb"
+    (is (= '(a 1 b 2 c 3 d 4) (actualizar-amb '(a 1 b 2 c 3) 'd 4)))
+    (is (= '(a 1 b 4 c 3) (actualizar-amb '(a 1 b 2 c 3) 'b 4)))
+    (is (= '(a 1 b 2 c 3) (actualizar-amb '(a 1 b 2 c 3) 'b (list (symbol ";ERROR:") 'mal 'hecho))))
+    (is (= '(b 7) (actualizar-amb () 'b 7)))
+  )
+) 
+
+; user=> (error? (list (symbol ";ERROR:") 'mal 'hecho))
+; true
+; user=> (error? (list 'mal 'hecho))
+; false
+; user=> (error? (list (symbol ";WARNING:") 'mal 'hecho))
+; true
+(deftest fnc-error-test
+  (testing "Prueba de la funcion: error?"
+    (is (= true (error? (list (symbol ";ERROR:") 'mal 'hecho))))
+    (is (= false (error? (list 'mal 'hecho))))
+    (is (= true (error? (list (symbol ";WARNING:") 'mal 'hecho))))
+  )
+)
+ 
+
+; user=> (buscar 'c '(a 1 b 2 c 3 d 4 e 5))
+; 3
+; user=> (buscar 'f '(a 1 b 2 c 3 d 4 e 5))
+; (;ERROR: unbound variable: f)
+(deftest fnc-buscar-test
+  (testing "Prueba de la funcion: buscar"
+    (is (= 3 (buscar 'c '(a 1 b 2 c 3 d 4 e 5))))
+    (is (= (generar-mensaje-error :unbound-variable 'f (buscar 'f '(a 1 b 2 c 3 d 4 e 5)))))
+  )
+)
+
+; user=> (proteger-bool-en-str "(or #F #f #t #T)")
+; "(or %F %f %t %T)"
+; user=> (proteger-bool-en-str "(and (or #F #f #t #T) #T)")
+; "(and (or %F %f %t %T) %T)"
+; user=> (proteger-bool-en-str "")
+; ""
+(deftest fnc-proteger-bool-en-str-test
+  (testing "Prueba de la funcion: proteger-bool-en-str"
+    (is (= "(or %F %f %t %T)" (proteger-bool-en-str "(or #F #f #t #T)")))
+    (is (= "(and (or %F %f %t %T) %T)" (proteger-bool-en-str "(and (or #F #f #t #T) #T)")))
+    (is (= "" (proteger-bool-en-str "")))
+  )
+)
+
+(def POR_F (symbol "%F"))
+(def NUM_F (symbol "#F"))
+(def POR_f (symbol "%f"))
+(def NUM_f (symbol "#f"))
+(def POR_T (symbol "%T"))
+(def NUM_T (symbol "#T"))
+(def POR_t (symbol "%t"))
+(def NUM_t (symbol "#t"))
+
+; user=> (restaurar-bool (read-string (proteger-bool-en-str "(and (or #F #f #t #T) #T)")))
+; (and (or #F #f #t #T) #T)
+; user=> (restaurar-bool (read-string "(and (or %F %f %t %T) %T)"))
+; (and (or #F #f #t #T) #T)
+(deftest fnc-restaurar-bool
+  (testing "Prueba de la funcion: restaurar-bool"
+    (is (= (conj (conj (conj () NUM_T) (conj (conj (conj (conj (conj () NUM_T) NUM_t) NUM_f) NUM_F) 'or)) 'and) (restaurar-bool (read-string (proteger-bool-en-str "(and (or #F #f #t #T) #T)")))))
+    (is (= (conj (conj (conj () NUM_T) (conj (conj (conj (conj (conj () NUM_T) NUM_t) NUM_f) NUM_F) 'or)) 'and) (restaurar-bool (read-string "(and (or %F %f %t %T) %T)"))))
   )
 )
