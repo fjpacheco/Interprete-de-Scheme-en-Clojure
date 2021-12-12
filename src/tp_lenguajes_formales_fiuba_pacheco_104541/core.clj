@@ -11,10 +11,7 @@
 (defn -main
   "Ejemplo de Proyecto en Clojure"
   [& args]
-  (println "Hola, soy un proyecto en Clojure")
-  ;(repl) ; funciona el llamado pero se rompe todo por no implementar nada..
-
-  (println (restaurar-bool (read-string (proteger-bool-en-str "(and (or #F #f #t #T) #T)"))))
+  (repl) ; funciona el llamado pero se rompe todo por no implementar nada..
   ;(ejemplo)
 )
 
