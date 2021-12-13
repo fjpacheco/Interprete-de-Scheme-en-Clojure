@@ -809,17 +809,20 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
 (def NUM_t (symbol "#t"))
 
 (defn reemplace-bool [sym]
-  (cond 
-    (= sym POR_T)
-      NUM_T
-    (= sym POR_f)
-      NUM_f
-    (= sym POR_F)
-      NUM_F
-    (= sym POR_t)
-      NUM_t
-    :else
-      sym
+  (if (symbol? sym)
+    (cond 
+      (= sym POR_T)
+        NUM_T
+      (= sym POR_f)
+        NUM_f
+      (= sym POR_F)
+        NUM_F
+      (= sym POR_t)
+        NUM_t
+      :else
+          sym
+    )
+    sym
   )
 )
 
@@ -839,7 +842,7 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
         )
         codigo
     )
-    codigo
+    (reemplace-bool codigo)
   )
 )
 
@@ -871,13 +874,15 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
     (and (string? x) (string? y))
       (= x y)
     (and (list? x) (list? y))
-      (reduce (fn [item-a item-b] (igual? item-a item-b)) (map (fn [item-x item-y] (igual? item-x item-y)) x y))
+      (spy "list x list y" (reduce (fn [item-a item-b] (and item-a item-b)) (map (fn [item-x item-y] (spy "es x y idem?" (igual? (spy "item-x" item-x) (spy "item-y" item-y)))) x y)))
     :else 
       (let [x-str-lower (lower-case (str x)), y-str-lower (lower-case (str y))]
         (= x-str-lower y-str-lower)
       )
   )
 )
+
+'((2 3) (3 ((7))) 5)
 
 ; user=> (fnc-append '( (1 2) (3) (4 5) (6 7)))
 ; (1 2 3 4 5 6 7)
@@ -888,10 +893,26 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
 (defn fnc-append
 "Devuelve el resultado de fusionar listas."
    [listas]
-  (let [not-list (filter (comp not list?) listas)]
+  (spy "me voy con" (let [not-list (spy "not-list" (filter (fn [element] (not (seq? element))) (spy "listas recibidas" listas)))]
     (if (empty? not-list) 
       (apply concat listas) 
       (generar-mensaje-error :wrong-type-arg 'append (first not-list))
+    )
+  ))
+)
+
+
+(defn fnc-equal?-aux
+  ([x y]
+    (spy "fnc-equal?-aux con x y" (igual? x y))
+  )
+  ([x y & more]
+    (if (igual? x y)
+      (if (next more)
+        (recur y (first more) (next more))
+        (igual? y (first more))
+      )
+      false
     )
   )
 )
@@ -917,30 +938,50 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
 ; VERSIÓN INSPIRADA EN EL "=" DE CLOJURE. PERO EL "=" USADO ES MI "igual?" QUE TIENE EN CUENTA LAS CASES-INSENSITIVE.
 ; LA VERSIÓN DE CLOJURE SE PUEDE VISUALIZAR EN CLOJURE LLAMANDO ASÍ -> (source =)
   ([lista]
-    (if (empty? lista)
+    (spy "salio con:" (if (empty? (spy "fnc-equal?-lista" lista))
         (symbol "#t")
         (if (= (count lista) 1)
           (symbol "#t")
-          (if (apply fnc-equal? lista)
+          (if (spy "apply" (apply fnc-equal?-aux lista))
             (symbol "#t")
             (symbol "#f")
           )
         )
-    )
-  )
-  ([x y]
-    (igual? x y)
-  )
-  ([x y & more]
-    (if (igual? x y)
-      (if (next more)
-        (recur y (first more) (next more))
-        (igual? y (first more))
-      )
-      false
-    )
+    ))
   )
 )
+
+(defn fnc-equal?-aux-new-f
+  [x y]
+  (cond 
+    (and (list? x) (not (list? y)))
+      (fnc-equal?)
+  )
+)
+
+(defn fnc-equal?-f
+"Evalua una expresion `or`.  Devuelve una lista con el resultado y un ambiente."
+  ([lista]
+    (spy "salio con:" (if (empty? (spy "fnc-equal?-lista" lista))
+        (symbol "#t")
+        (if (= (count lista) 1)
+          (symbol "#t")
+          (let [resultado (reduce (fn [x y] (fnc-equal?-aux-new-f x y)) lista)]
+            (true)  
+              (symbol "#t")
+            (false)
+              (symbol "#f")
+            :else
+              (symbol "#f")
+          )
+        )
+    ))
+  )
+)
+
+
+
+
 
 ; user=> (fnc-read ())
 ; (hola
@@ -1151,7 +1192,7 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
   (if (not (symbol? escalar))
     (list escalar amb)
     (let [amb-map (partition 2 amb)]
-      (let [pair (filter (fn [x] (= (first x) escalar)) amb-map)]
+      (let [pair (filter (fn [x] (= (str (first x)) (lower-case (str escalar)))) amb-map)]
         (if (empty? pair)
           (list (generar-mensaje-error :unbound-variable escalar) amb)
           (list (second (first pair)) amb)
@@ -1180,15 +1221,15 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
 (defn evaluar-define
 "Evalua una expresion `define`. Devuelve una lista con el resultado y un ambiente actualizado con la definicion."
   [exp amb]
-  (if (not (= (count exp) 3))
+  (if (and (not (= (count exp) 3)) (not (seq? (second exp))))
     (list (generar-mensaje-error :missing-or-extra 'define exp) amb)
     (cond
       (and (not (symbol? (second exp))) (or (number? (second exp)) (empty? (second exp))))
         (list (generar-mensaje-error :bad-variable 'define exp) amb)
       (and (seq? (nth exp 1)) (seq? (nth exp 1))) ; lambda!
-        (list (symbol "#<unspecified>") (actualizar-amb amb (first (second exp)) (list 'lambda (rest (second exp)) (nth exp 2))))
+        (list (symbol "#<unspecified>") (actualizar-amb amb (read-string (lower-case (str (first (second exp))))) (list 'lambda (rest (second exp)) (nth exp 2))))
       :else 
-        (let [amb-updated (actualizar-amb amb (nth exp 1) (nth exp 2))]
+        (let [amb-updated (actualizar-amb amb (read-string (lower-case (str (nth exp 1)))) (first (evaluar (nth exp 2) amb)))]
             (list (symbol "#<unspecified>") amb-updated)
         )
     )
@@ -1213,8 +1254,52 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
 ; ((;ERROR: if: missing or extra expression (if 1)) (n 7))
 (defn evaluar-if
 "Evalua una expresion `if`. Devuelve una lista con el resultado y un ambiente eventualmente modificado."
-[exp amb]
-(exp amb)
+  [exp amb]
+  (if (or (> (count exp) 4) (< (count exp) 3))
+    (list (generar-mensaje-error :missing-or-extra 'if exp) amb)
+    (let [condicion-evaluada (first (evaluar (nth exp 1) amb))]
+      (if (or (= condicion-evaluada (symbol "#t")) (= condicion-evaluada 1))
+        (evaluar (nth exp 2) amb)
+        (if (= (count exp) 3)
+          (list (symbol "#<unspecified>") amb)
+          (evaluar (nth exp 3) amb)
+        )
+      )
+    )
+  )
+)
+
+(defn scm-bool-to-clojure-bool
+    [boolean]
+    (cond
+      (or (= boolean (symbol "#t")) (= boolean (symbol "#T")))
+        true
+      (or (= boolean (symbol "#f")) (= boolean (symbol "#F")))
+        false
+      :else
+        boolean
+    )
+  )
+
+
+(defn clojure-bool-to-scm-bool
+  [boolean]
+  (cond
+    (= boolean true)
+      (symbol "#t")
+    (= boolean false)
+      (symbol "#f")
+    :else
+      boolean
+  )
+)
+
+(defn or-aux
+  [x y amb]
+    (let [primero (first (evaluar x amb)),
+          segundo (first (evaluar y amb))]
+          (clojure-bool-to-scm-bool (or (scm-bool-to-clojure-bool primero) (scm-bool-to-clojure-bool segundo)))
+    )
 )
 
 ; user=> (evaluar-or (list 'or) (list (symbol "#f") (symbol "#f") (symbol "#t") (symbol "#t")))
@@ -1229,8 +1314,17 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
 ; (#f (#f #f #t #t))
 (defn evaluar-or
 "Evalua una expresion `or`.  Devuelve una lista con el resultado y un ambiente."
-[exp amb]
-(exp amb)
+  [exp amb]
+  (cond
+    (= (count exp) 1)
+      (list (symbol "#f") amb)
+    (= (count exp) 2)
+      (evaluar (nth exp 1) amb)
+    (= (count exp) 3)
+      (list (or-aux (nth exp 1) (nth exp 2) amb) amb)
+    :else 
+      (list (reduce (fn [x y] (or-aux x y amb)) (pop exp)) amb)
+  )
 )
 
 ; user=> (evaluar-set! '(set! x 1) '(x 0))
@@ -1257,14 +1351,13 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
           (let [encontrado (buscar (nth exp 1) amb)]
               (if (error? encontrado)
                 (list encontrado amb)
-                (list (symbol "#<unspecified>") (actualizar-amb amb (nth exp 1) (nth exp 2)))
+                (list (symbol "#<unspecified>") (actualizar-amb amb (read-string (lower-case (str (nth exp 1)))) (first (evaluar (nth exp 2) amb))))
               )
           )
         )
     )
   )
 )
-
 
 ; Al terminar de cargar el archivo en el REPL de Clojure, se debe devolver true.
 
