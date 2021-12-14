@@ -1,7 +1,7 @@
-(ns tp-lenguajes-formales-fiuba-pacheco-104541.core-test)
+(ns interprete_scheme.scheme_test)
 
 (require '[clojure.test :refer :all]
-         '[tp-lenguajes-formales-fiuba-pacheco-104541.scheme
+         '[interprete_scheme.scheme
             :refer [
                       generar-mensaje-error 
                       fnc-sumar 

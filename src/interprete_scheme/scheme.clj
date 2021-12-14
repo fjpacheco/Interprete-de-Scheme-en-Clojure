@@ -1,4 +1,4 @@
-(ns tp-lenguajes-formales-fiuba-pacheco-104541.scheme)
+(ns interprete_scheme.scheme)
 
 (require '[clojure.string :as st :refer [blank? starts-with? ends-with? lower-case]]
   '[clojure.java.io :refer [delete-file reader]]
@@ -826,6 +826,17 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
   )
 )
 
+(defn evaluar-quote-upper-case
+  [resultado]
+  (if (seq? resultado)
+    (if (= (first resultado) 'quote)
+        (list (first resultado) (read-string (lower-case (str (second resultado)))))
+        resultado
+    )
+    resultado
+  )
+)
+
 ; user=> (restaurar-bool (read-string (proteger-bool-en-str "(and (or #F #f #t #T) #T)")))
 ; (and (or #F #f #t #T) #T)
 ; user=> (restaurar-bool (read-string "(and (or %F %f %t %T) %T)") )
@@ -833,16 +844,19 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
 (defn restaurar-bool
 "Cambia, en un codigo leido con read-string, %t por #t y %f por #f (y sus respectivas versiones en mayusculas)."
   [codigo]
-  (if (list? codigo)
-    (map (fn [item] 
-            (if (not (list? item))
-              (reemplace-bool item)
-              (restaurar-bool item)
+  (let [resultado 
+    (if (list? codigo)
+        (map (fn [item] 
+              (if (not (list? item))
+                (reemplace-bool item)
+                (restaurar-bool item)
+              )
             )
-        )
-        codigo
-    )
-    (reemplace-bool codigo)
+          codigo
+      )
+      (reemplace-bool codigo)
+    )]
+    (evaluar-quote-upper-case resultado)
   )
 )
 
@@ -874,7 +888,7 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
     (and (string? x) (string? y))
       (= x y)
     (and (list? x) (list? y))
-      (spy "list x list y" (reduce (fn [item-a item-b] (and item-a item-b)) (map (fn [item-x item-y] (spy "es x y idem?" (igual? (spy "item-x" item-x) (spy "item-y" item-y)))) x y)))
+      (reduce (fn [item-a item-b] (and item-a item-b)) (map (fn [item-x item-y] (igual? item-x item-y)) x y))
     :else 
       (let [x-str-lower (lower-case (str x)), y-str-lower (lower-case (str y))]
         (= x-str-lower y-str-lower)
@@ -893,18 +907,18 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
 (defn fnc-append
 "Devuelve el resultado de fusionar listas."
    [listas]
-  (spy "me voy con" (let [not-list (spy "not-list" (filter (fn [element] (not (seq? element))) (spy "listas recibidas" listas)))]
+   (let [not-list (filter (fn [element] (not (seq? element))) listas)]
     (if (empty? not-list) 
       (apply concat listas) 
       (generar-mensaje-error :wrong-type-arg 'append (first not-list))
     )
-  ))
+   )
 )
 
 
 (defn fnc-equal?-aux
   ([x y]
-    (spy "fnc-equal?-aux con x y" (igual? x y))
+    (igual? x y)
   )
   ([x y & more]
     (if (igual? x y)
@@ -938,16 +952,16 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
 ; VERSIÓN INSPIRADA EN EL "=" DE CLOJURE. PERO EL "=" USADO ES MI "igual?" QUE TIENE EN CUENTA LAS CASES-INSENSITIVE.
 ; LA VERSIÓN DE CLOJURE SE PUEDE VISUALIZAR EN CLOJURE LLAMANDO ASÍ -> (source =)
   ([lista]
-    (spy "salio con:" (if (empty? (spy "fnc-equal?-lista" lista))
+    (if (empty? lista)
         (symbol "#t")
         (if (= (count lista) 1)
           (symbol "#t")
-          (if (spy "apply" (apply fnc-equal?-aux lista))
+          (if (apply fnc-equal?-aux lista)
             (symbol "#t")
             (symbol "#f")
           )
         )
-    ))
+    )
   )
 )
 
@@ -962,7 +976,7 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
 (defn fnc-equal?-f
 "Evalua una expresion `or`.  Devuelve una lista con el resultado y un ambiente."
   ([lista]
-    (spy "salio con:" (if (empty? (spy "fnc-equal?-lista" lista))
+    (if (empty? lista)
         (symbol "#t")
         (if (= (count lista) 1)
           (symbol "#t")
@@ -975,7 +989,7 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
               (symbol "#f")
           )
         )
-    ))
+    )
   )
 )
 
@@ -1226,12 +1240,24 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
     (cond
       (and (not (symbol? (second exp))) (or (number? (second exp)) (empty? (second exp))))
         (list (generar-mensaje-error :bad-variable 'define exp) amb)
-      (and (seq? (nth exp 1)) (seq? (nth exp 1))) ; lambda!
-        (list (symbol "#<unspecified>") (actualizar-amb amb (read-string (lower-case (str (first (second exp))))) (list 'lambda (rest (second exp)) (nth exp 2))))
+      (and (seq? (nth exp 1)) (seq? (nth exp 2)) (> (count exp) 2)) ; lambda!
+        (list (symbol "#<unspecified>") (actualizar-amb amb (read-string (lower-case (str (first (second exp))))) (cons 'lambda (cons (rest (second exp)) (drop 2 exp)))))
       :else 
         (let [amb-updated (actualizar-amb amb (read-string (lower-case (str (nth exp 1)))) (first (evaluar (nth exp 2) amb)))]
             (list (symbol "#<unspecified>") amb-updated)
         )
+    )
+  )
+)
+
+
+(defn evaluar-uppercase
+  [res]
+  (if (= (symbol "#<unspecified>") (first res))
+    res
+    (if (not (seq? (first res)))
+      (list (read-string (lower-case (str (first res)))) (second res))
+      res
     )
   )
 )
@@ -1259,10 +1285,10 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
     (list (generar-mensaje-error :missing-or-extra 'if exp) amb)
     (let [condicion-evaluada (first (evaluar (nth exp 1) amb))]
       (if (or (= condicion-evaluada (symbol "#t")) (= condicion-evaluada 1))
-        (evaluar (nth exp 2) amb)
+        (evaluar-uppercase (evaluar (evaluar-quote-upper-case (nth exp 2)) amb))
         (if (= (count exp) 3)
           (list (symbol "#<unspecified>") amb)
-          (evaluar (nth exp 3) amb)
+          (evaluar-uppercase (evaluar (evaluar-quote-upper-case (nth exp 3)) amb))
         )
       )
     )
