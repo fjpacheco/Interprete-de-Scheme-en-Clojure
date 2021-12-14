@@ -1,3 +1,6 @@
+[![Clojure CI](https://github.com/fjpacheco/Interprete-de-Scheme-en-Clojure/actions/workflows/clojure.yml/badge.svg?branch=master)](https://github.com/fjpacheco/Interprete-de-Scheme-en-Clojure/actions/workflows/clojure.yml)
+[![Materia e Institución](https://img.shields.io/badge/Lenguajes%20Formales-FIUBA-blue](https://campus.fi.uba.ar/course/view.php?id=210)
+
 # Interprete de Scheme en Clojure
 
 Se desarrollo....
