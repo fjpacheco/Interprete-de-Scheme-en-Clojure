@@ -1,9 +1,13 @@
 [![Clojure CI](https://github.com/fjpacheco/Interprete-de-Scheme-en-Clojure/actions/workflows/clojure.yml/badge.svg?branch=master)](https://github.com/fjpacheco/Interprete-de-Scheme-en-Clojure/actions/workflows/clojure.yml)
-[![Materia e Institución](https://img.shields.io/badge/Lenguajes%20Formales-FIUBA-blue](https://campus.fi.uba.ar/course/view.php?id=210)
+[![Materia e Institución](https://img.shields.io/badge/Lenguajes%20Formales-FIUBA-blue)](https://campus.fi.uba.ar/course/view.php?id=210)
 
 # Interprete de Scheme en Clojure
 
-Se desarrollo....
+Este interprete de Scheme fue parte del trabajo práctico para la materia de **Lenguajes Formales (75.14)** dictada en la **Facultad de Ingeniería de la Universidad 
+de Buenos Aires (FIUBA)** durante el segundo cuatrimestre del 2021.
+
+En la implementación se utilizó el lenguaje **Clojure**, un lenguaje de programación de propósito general _dialecto_ de *Lisp*. Se desarrollo el trabajo haciendo un énfasis especial en las técnicas del paradigma de la **programación funcional** vistas en el curso, aprovechando las bondades de dicho paradigma que nos brinda Clojure.
+
 
 ## Uso
 
