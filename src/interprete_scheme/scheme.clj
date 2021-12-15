@@ -795,7 +795,13 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
 (defn proteger-bool-en-str
 "Cambia, en una cadena, #t por %t y #f por %f (y sus respectivas versiones en mayusculas), para poder aplicarle read-string."
   [cadena]
-  (apply str (replace '{\# \%} (map char cadena))) ; ; 1° Versión! SI funciona.. pero entendí en el foro que podíamos usar "clojure.string/replace"
+ ; (apply str (replace '{\# \%} (map char cadena))) ; ; 1° Versión! SI funciona.. pero entendí en el foro que podíamos usar "clojure.string/replace"
+    (-> cadena
+      (clojure.string/replace #"#F" "%F")
+      (clojure.string/replace #"#f" "%f")
+      (clojure.string/replace #"#T" "%T")
+      (clojure.string/replace #"#t" "%t")
+    )
 )
 
 
@@ -820,12 +826,26 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
       (= sym POR_t)
         NUM_t
       :else
-          sym
+         sym
     )
-    sym
+    (if (string? sym)
+      (-> sym
+        (clojure.string/replace #"%F" "#F")
+        (clojure.string/replace #"%f" "#f")
+        (clojure.string/replace #"%T" "#T")
+        (clojure.string/replace #"%t" "#t")
+      )
+      sym
+    )
   )
 )
 
+; Se creó para analizar el uppercase en los IF's.. Ya que el programa (load "demo") en el interprete
+; original de Scheme estas funciones devolvian en minusculas:
+; > (mapear (lambda (x) (if (equal? x 0) 'Z x)) '(5 0 2 -1 4 6 0 8))
+; (5 z 2 -1 4 6 z 8)
+; > (SELECCIONAR 5 '(A B C D E F G H I J))
+; e
 (defn evaluar-quote-upper-case
   [resultado]
   (if (seq? resultado)
@@ -847,13 +867,13 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
   (let [resultado 
     (if (list? codigo)
         (map (fn [item] 
-              (if (not (list? item))
+              (if (not (seq? item))
                 (reemplace-bool item)
                 (restaurar-bool item)
               )
             )
           codigo
-      )
+        )
       (reemplace-bool codigo)
     )]
     (evaluar-quote-upper-case resultado)
@@ -1235,29 +1255,17 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
 (defn evaluar-define
 "Evalua una expresion `define`. Devuelve una lista con el resultado y un ambiente actualizado con la definicion."
   [exp amb]
-  (if (and (not (= (count exp) 3)) (not (seq? (second exp))))
+  (if (or (and (not (= (count exp) 3)) (not (seq? (second exp)))) (< (count exp) 3))
     (list (generar-mensaje-error :missing-or-extra 'define exp) amb)
     (cond
       (and (not (symbol? (second exp))) (or (number? (second exp)) (empty? (second exp))))
         (list (generar-mensaje-error :bad-variable 'define exp) amb)
       (and (seq? (nth exp 1)) (seq? (nth exp 2)) (> (count exp) 2)) ; lambda!
-        (list (symbol "#<unspecified>") (actualizar-amb amb (read-string (lower-case (str (first (second exp))))) (cons 'lambda (cons (rest (second exp)) (drop 2 exp)))))
+          (list (symbol "#<unspecified>") (actualizar-amb amb (read-string (lower-case (str (first (second exp))))) (cons 'lambda (cons (rest (second exp)) (drop 2 exp)))))
       :else 
         (let [amb-updated (actualizar-amb amb (read-string (lower-case (str (nth exp 1)))) (first (evaluar (nth exp 2) amb)))]
             (list (symbol "#<unspecified>") amb-updated)
         )
-    )
-  )
-)
-
-
-(defn evaluar-uppercase
-  [res]
-  (if (= (symbol "#<unspecified>") (first res))
-    res
-    (if (not (seq? (first res)))
-      (list (read-string (lower-case (str (first res)))) (second res))
-      res
     )
   )
 )
@@ -1285,10 +1293,10 @@ y devuelve el valor asociado. Devuelve un error :unbound-variable si no la encue
     (list (generar-mensaje-error :missing-or-extra 'if exp) amb)
     (let [condicion-evaluada (first (evaluar (nth exp 1) amb))]
       (if (or (= condicion-evaluada (symbol "#t")) (= condicion-evaluada 1))
-        (evaluar-uppercase (evaluar (evaluar-quote-upper-case (nth exp 2)) amb))
+        (evaluar (evaluar-quote-upper-case (nth exp 2)) amb)
         (if (= (count exp) 3)
           (list (symbol "#<unspecified>") amb)
-          (evaluar-uppercase (evaluar (evaluar-quote-upper-case (nth exp 3)) amb))
+          (evaluar (evaluar-quote-upper-case (nth exp 3)) amb)
         )
       )
     )

@@ -1,4 +1,4 @@
-(load "breadth.scm")
+(load "test/interprete_scheme/breadth.scm")
 
 (define (jarra5 x) (car x))
 
