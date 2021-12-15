@@ -85,7 +85,7 @@ Es autoejecutable. La salida de dicho programa debía coincidir con la salida qu
 
 ### Problema de las dos jarras
 
-Otro programa pero, es interactivo con el usuario donde su salida también debía coincidir con la del intérprete de Scheme original versión 5f2. Dentro del programa, se debe cargar el archivo `/test/interprete_scheme/jarras.scm`, el mismo programa internamente llamará a otro archivo de `/test/interprete_scheme/breadth.scm`. Luego se ejecuta el programa tipeando `(breadth-first bc)` e indicando los estados iniciales y finales para resolver. Usando de nuevo *Leiningen*.
+Otro programa pero, es interactivo con el usuario donde su salida también debía coincidir con la del intérprete de Scheme original versión 5f2. Dentro del programa, se debe cargar el archivo `/test/interprete_scheme/jarras.scm`, el mismo programa internamente llamará a otro archivo de `/test/interprete_scheme/breadth.scm`. Luego se ejecuta el programa tipeando `(breadth-first bc)` e indicando los estados iniciales y finales para resolver. Usando de nuevo *Leiningen*:
 
     $ lein run
     Interprete de Scheme en Clojure
